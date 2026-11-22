@@ -44,6 +44,23 @@ def test_split_screen_desktop_layout(desktop_page: Page, target_urls: list[str])
 		)
 
 
+def test_login_left_panel_remains_visible_when_window_is_narrowed(
+	desktop_page: Page, target_urls: list[str]
+) -> None:
+	_visit(desktop_page, target_urls[1], ".auth-page")
+	desktop_page.set_viewport_size({"width": 1024, "height": 768})
+
+	left_panel = desktop_page.locator(".auth-left-panel")
+	expect(left_panel).to_be_visible()
+	left_bounds = left_panel.bounding_box()
+	assert left_bounds is not None
+
+	assert left_bounds["x"] >= 0, "Login branding panel should not be clipped off the left edge"
+	assert left_bounds["x"] + left_bounds["width"] <= 1024, (
+		"Login branding panel should remain within the narrowed viewport"
+	)
+
+
 def test_register_side_by_side_inputs(
 	desktop_page: Page, target_urls: list[str]
 ) -> None:
@@ -82,3 +99,34 @@ def test_cta_hover_cursor_states(
 		assert cursor == "pointer", (
 			f"{cta_name!r} on {url} should use the pointer cursor, got {cursor!r}"
 		)
+
+def test_password_error_text_no_overlap(desktop_page: Page, target_urls: list[str]) -> None:
+    """Verify registration password error text does not visually overlap helper text (NFT-USE-01)."""
+    # Navigate to the registration page
+    _visit(desktop_page, target_urls[2], ".auth-page")
+    
+    # Click 'Create account' with empty inputs to trigger inline validation errors
+    submit_button = desktop_page.get_by_role("button", name="Create account", exact=True)
+    submit_button.click()
+    
+    # Locate the error message and helper text
+    error_msg = desktop_page.locator("text=Password is required")
+    helper_txt = desktop_page.locator("text=Use 8+ characters")
+    
+    expect(error_msg).to_be_visible()
+    expect(helper_txt).to_be_visible()
+    
+    error_bounds = error_msg.bounding_box()
+    helper_bounds = helper_txt.bounding_box()
+    
+    assert error_bounds is not None, "Error message bounding box could not be calculated"
+    assert helper_bounds is not None, "Helper text bounding box could not be calculated"
+    
+    # Calculate bottom edge of error message (y-position + height)
+    error_bottom = error_bounds["y"] + error_bounds["height"]
+    
+    # Assert the error message ends before or at the top edge of helper text
+    assert error_bottom <= helper_bounds["y"], (
+        f"Visual text collision detected! Error bottom ({error_bottom:.1f}px) "
+        f"overlaps helper top ({helper_bounds['y']:.1f}px)"
+    )		

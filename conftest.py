@@ -34,6 +34,54 @@ def desktop_hd_page() -> Iterator[Page]:
 
 
 @pytest.fixture
+def mobile_page() -> Iterator[Page]:
+	"""Provide a Chromium page configured for an iPhone-sized mobile viewport."""
+	with sync_playwright() as playwright:
+		browser = playwright.chromium.launch()
+		page = browser.new_page(
+			viewport={"width": 375, "height": 812},
+			is_mobile=True,
+			has_touch=True,
+		)
+		try:
+			yield page
+		finally:
+			browser.close()
+
+
+@pytest.fixture
+def tablet_page() -> Iterator[Page]:
+	"""Provide a Chromium page configured for an iPad-sized tablet viewport."""
+	with sync_playwright() as playwright:
+		browser = playwright.chromium.launch()
+		page = browser.new_page(
+			viewport={"width": 768, "height": 1024},
+			is_mobile=True,
+			has_touch=True,
+		)
+		try:
+			yield page
+		finally:
+			browser.close()
+
+
+@pytest.fixture
+def ios_webkit_page() -> Iterator[Page]:
+	"""Provide a WebKit page configured for an iOS-sized mobile viewport."""
+	with sync_playwright() as playwright:
+		browser = playwright.webkit.launch()
+		page = browser.new_page(
+			viewport={"width": 390, "height": 844},
+			is_mobile=True,
+			has_touch=True,
+		)
+		try:
+			yield page
+		finally:
+			browser.close()
+
+
+@pytest.fixture
 def target_urls() -> list[str]:
 	"""Return the Matchwise desktop pages used by browser tests."""
 	return [
