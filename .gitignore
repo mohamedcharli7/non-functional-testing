@@ -1,0 +1,5 @@
+.env
+auth.json
+__pycache__/
+.pytest_cache/
+session_auth.json
